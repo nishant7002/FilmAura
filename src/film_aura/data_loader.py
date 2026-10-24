@@ -69,11 +69,16 @@ class MovieLensDataLoader:
                 )
 
     def load_raw_data(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        """Loads the raw CSV files into DataFrames."""
-        self.df_movies = pd.read_csv(self.movies_path)
-        self.df_ratings = pd.read_csv(self.ratings_path)
-        self.df_tags = pd.read_csv(self.tags_path)
-        self.df_links = pd.read_csv(self.links_path)
+        """Loads the raw CSV files into DataFrames with memory-optimized dtypes."""
+        dtype_ratings = {"userId": "int32", "movieId": "int32", "rating": "float32", "timestamp": "int32"}
+        dtype_movies = {"movieId": "int32", "title": "string", "genres": "string"}
+        dtype_tags = {"userId": "int32", "movieId": "int32", "tag": "string", "timestamp": "int32"}
+        dtype_links = {"movieId": "int32"}
+
+        self.df_movies = pd.read_csv(self.movies_path, dtype=dtype_movies)
+        self.df_ratings = pd.read_csv(self.ratings_path, dtype=dtype_ratings)
+        self.df_tags = pd.read_csv(self.tags_path, dtype=dtype_tags)
+        self.df_links = pd.read_csv(self.links_path, dtype=dtype_links)
         return self.df_movies, self.df_ratings, self.df_tags, self.df_links
 
     def get_dataset_summary(self) -> Dict[str, Any]:
@@ -217,9 +222,9 @@ class MovieLensDataLoader:
         movie_to_idx = {m: i for i, m in enumerate(unique_movies)}
         idx_to_movie = {i: m for i, m in enumerate(unique_movies)}
 
-        row_indices = [user_to_idx[u] for u in df_filtered["userId"]]
-        col_indices = [movie_to_idx[m] for m in df_filtered["movieId"]]
-        ratings = df_filtered["rating"].astype(np.float32).values
+        row_indices = df_filtered["userId"].map(user_to_idx).to_numpy(dtype=np.int32)
+        col_indices = df_filtered["movieId"].map(movie_to_idx).to_numpy(dtype=np.int32)
+        ratings = df_filtered["rating"].to_numpy(dtype=np.float32)
 
         matrix = csr_matrix(
             (ratings, (row_indices, col_indices)),

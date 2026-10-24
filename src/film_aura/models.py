@@ -121,6 +121,7 @@ class ItemItemKNNRecommender:
 
     def __init__(self):
         self.item_sim_matrix: Optional[np.ndarray] = None
+        self.item_user_matrix: Optional[csr_matrix] = None
         self.movie_to_col: Dict[int, int] = {}
         self.col_to_movie: Dict[int, int] = {}
         self.num_items: int = 0
@@ -136,17 +137,21 @@ class ItemItemKNNRecommender:
         self.num_items = len(movie_to_col)
 
         # Transpose so rows are items, columns are users
-        item_user_matrix = rating_matrix.T.tocsr()
-        # Compute item-item cosine similarity
-        self.item_sim_matrix = cosine_similarity(item_user_matrix, dense_output=True)
-        # Clip negative similarities to 0
-        self.item_sim_matrix = np.clip(self.item_sim_matrix, 0.0, 1.0)
+        self.item_user_matrix = rating_matrix.T.tocsr()
+        
+        # Precompute full pairwise similarity only if item count is reasonable (e.g. <= 3500)
+        # to avoid OOM memory explosion on full MovieLens 32M
+        if self.num_items <= 3500:
+            self.item_sim_matrix = cosine_similarity(self.item_user_matrix, dense_output=True)
+            self.item_sim_matrix = np.clip(self.item_sim_matrix, 0.0, 1.0)
+        else:
+            self.item_sim_matrix = None
         return self
 
     def score_anchors(self, anchor_movie_ids: List[int]) -> Dict[int, float]:
         """Returns collaborative similarity scores for all items given anchor movies."""
-        if self.item_sim_matrix is None:
-            return {mid: 0.5 for mid in self.movie_to_col}
+        if self.movie_to_col is None:
+            return {}
 
         valid_cols = [
             self.movie_to_col[mid]
@@ -157,10 +162,19 @@ class ItemItemKNNRecommender:
         if not valid_cols:
             return {mid: 0.5 for mid in self.movie_to_col}
 
-        if len(valid_cols) == 1:
-            sim_vec = self.item_sim_matrix[valid_cols[0]]
+        # If precomputed matrix exists (dev mode / compact catalogue)
+        if self.item_sim_matrix is not None:
+            if len(valid_cols) == 1:
+                sim_vec = self.item_sim_matrix[valid_cols[0]]
+            else:
+                sim_vec = np.mean(self.item_sim_matrix[valid_cols], axis=0)
+        elif self.item_user_matrix is not None:
+            # Scalable on-the-fly similarity for MovieLens 32M
+            sim_sub = cosine_similarity(self.item_user_matrix[valid_cols], self.item_user_matrix)
+            sim_sub = np.clip(sim_sub, 0.0, 1.0)
+            sim_vec = np.mean(sim_sub, axis=0) if len(valid_cols) > 1 else sim_sub[0]
         else:
-            sim_vec = np.mean(self.item_sim_matrix[valid_cols], axis=0)
+            return {mid: 0.5 for mid in self.movie_to_col}
 
         return {self.col_to_movie[col]: float(sim_vec[col]) for col in range(len(sim_vec))}
 
@@ -204,16 +218,11 @@ class SVDRecommender:
         n_comp = max(2, n_comp)
 
         self.svd = TruncatedSVD(n_components=n_comp, random_state=self.random_state)
-        # Dense or centered transformation
-        matrix_dense = rating_matrix.toarray()
-        non_zero = matrix_dense > 0
-        if np.any(non_zero):
-            self.global_mean = float(matrix_dense[non_zero].mean())
+        if rating_matrix.nnz > 0:
+            self.global_mean = float(rating_matrix.data.mean())
         
-        # Center by non-zero global mean
-        matrix_centered = np.where(non_zero, matrix_dense - self.global_mean, 0.0)
-
-        self.user_embeddings = self.svd.fit_transform(matrix_centered)
+        # Fit directly on sparse matrix - zero memory explosion, scales to 32M ratings
+        self.user_embeddings = self.svd.fit_transform(rating_matrix)
         self.item_embeddings = self.svd.components_.T  # Shape: (num_movies, n_components)
         return self
 

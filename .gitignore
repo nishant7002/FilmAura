@@ -6,3 +6,13 @@ __pycache__/
 venv/
 .venv/
 .DS_Store
+
+# Raw heavy datasets
+data/ml-32m/
+data/*.zip
+*.zip
+*.tar.gz
+
+# Cache files
+artifacts/fontlist*.json
+.matplotlib/

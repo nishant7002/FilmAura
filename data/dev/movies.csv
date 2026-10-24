@@ -1,0 +1,61 @@
+movieId,title,genres
+1,Blade Runner 2049 (2017),Sci-Fi|Mystery|Drama
+2,Children of Men (2006),Sci-Fi|Thriller|Drama
+3,Ex Machina (2014),Sci-Fi|Mystery|Drama
+4,Dark City (1998),Film-Noir|Mystery|Sci-Fi
+5,Annihilation (2018),Sci-Fi|Horror|Mystery
+6,Arrival (2016),Sci-Fi|Drama|Mystery
+7,Drive (2011),Crime|Drama|Action
+8,1917 (2019),War|Drama|Action
+9,Snowpiercer (2013),Action|Sci-Fi|Drama
+10,The Road (2009),Drama|Adventure|Thriller
+11,Interstellar (2014),Sci-Fi|Adventure|Drama
+12,Parasite (2019),Comedy|Drama|Thriller
+13,The Lighthouse (2019),Horror|Mystery|Drama
+14,Solaris (1972),Sci-Fi|Mystery|Drama
+15,Nightcrawler (2014),Crime|Drama|Thriller
+16,The Shawshank Redemption (1994),Drama|Crime
+17,The Godfather (1972),Crime|Drama
+18,Pulp Fiction (1994),Crime|Comedy|Thriller
+19,The Dark Knight (2008),Action|Crime|Drama
+20,Fight Club (1999),Action|Crime|Drama
+21,Inception (2010),Action|Sci-Fi|Thriller
+22,The Matrix (1999),Action|Sci-Fi
+23,Goodfellas (1990),Crime|Drama
+24,Se7en (1995),Crime|Mystery|Thriller
+25,The Silence of the Lambs (1991),Crime|Drama|Thriller
+26,Spirited Away (2001),Animation|Adventure|Fantasy
+27,Amélie (2001),Comedy|Romance
+28,Toy Story (1995),Adventure|Animation|Children|Comedy|Fantasy
+29,WALL-E (2008),Animation|Adventure|Comedy|Romance|Sci-Fi
+30,La La Land (2016),Comedy|Drama|Musical|Romance
+31,Before Sunrise (1995),Drama|Romance
+32,Before Sunset (2004),Drama|Romance
+33,Paddington 2 (2017),Adventure|Children|Comedy
+34,Up (2009),Animation|Adventure|Children|Drama
+35,Singin' in the Rain (1952),Comedy|Musical|Romance
+36,Eternal Sunshine of the Spotless Mind (2004),Drama|Romance|Sci-Fi
+37,Memento (2000),Mystery|Thriller
+38,Her (2013),Drama|Romance|Sci-Fi
+39,Whiplash (2014),Drama|Musical
+40,Stalker (1979),Drama|Sci-Fi
+41,2001: A Space Odyssey (1968),Adventure|Mystery|Sci-Fi
+42,Blade Runner (1982),Film-Noir|Sci-Fi|Thriller
+43,Alien (1979),Horror|Sci-Fi
+44,Apocalypse Now (1979),Drama|War
+45,Taxi Driver (1976),Crime|Drama
+46,The Grand Budapest Hotel (2014),Adventure|Comedy|Drama
+47,Fargo (1996),Comedy|Crime|Drama|Thriller
+48,The Big Lebowski (1998),Comedy|Crime
+49,Dr. Strangelove (1964),Comedy|War
+50,Monty Python and the Holy Grail (1975),Adventure|Comedy|Fantasy
+51,Mad Max: Fury Road (2015),Action|Adventure|Sci-Fi
+52,Zodiac (2007),Crime|Drama|Mystery|Thriller
+53,Shutter Island (2010),Drama|Mystery|Thriller
+54,No Country for Old Men (2007),Crime|Drama|Thriller
+55,Prisoners (2013),Crime|Drama|Mystery|Thriller
+56,My Neighbor Totoro (1988),Animation|Children|Fantasy
+57,Paterson (2016),Comedy|Drama|Romance
+58,Baraka (1992),Documentary
+59,Samsara (2011),Documentary
+60,Won't You Be My Neighbor? (2018),Documentary

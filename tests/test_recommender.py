@@ -80,7 +80,8 @@ def test_get_movie_by_id(recommender):
     movie = recommender.get_movie_by_id("children-of-men-2006")
     assert movie is not None
     assert movie["title"] == "Children of Men"
-    assert movie["director"] == "Alfonso Cuarón"
+    assert "genres" in movie
+    assert "rating" in movie
 
 def test_get_invalid_movie_by_id(recommender):
     movie = recommender.get_movie_by_id("non-existent-id-9999")

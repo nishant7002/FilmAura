@@ -1,0 +1,14 @@
+{
+  "dataset_mode": "dev",
+  "evaluated_users": 50,
+  "Precision@5": 0.288,
+  "Recall@5": 0.2014,
+  "HitRate@5": 0.84,
+  "NDCG@5": 0.2989,
+  "Precision@10": 0.262,
+  "Recall@10": 0.362,
+  "HitRate@10": 0.98,
+  "NDCG@10": 0.3375,
+  "Catalog_Coverage": 0.9,
+  "Novelty@10": 5.8961
+}

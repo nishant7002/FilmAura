@@ -82,7 +82,14 @@ def render_taste_calibration_view():
         )
         anchor_cols = st.columns(max(len(anchored_ids), 1))
         for i, aid in enumerate(anchored_ids):
-            match = df[df["id"] == aid]
+            match = df[df["id"] == str(aid)]
+            if match.empty:
+                for _, r_cand in df.iterrows():
+                    c_clean = str(r_cand["title"]).lower().replace(":", "").replace("'", "").replace("&", "and")
+                    c_slug = "-".join(c_clean.split()) + f"-{r_cand.get('year', 2000)}"
+                    if c_slug == str(aid) or str(r_cand["movieId"]) == str(aid):
+                        match = df[df["movieId"] == r_cand["movieId"]]
+                        break
             if not match.empty:
                 title = match.iloc[0]["title"]
                 year = match.iloc[0]["year"]

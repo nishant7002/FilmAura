@@ -1,89 +1,134 @@
 """
-FilmAura — Main Application Entrypoint
-Integrates Google Stitch UI Design with Machine Learning Essentials Recommender.
+FilmAura — Streamlit Application
+A student-built personalized movie recommendation system.
+Tagline: Your mood. Your taste. Your next movie.
 """
 
-import sys
-import os
 import streamlit as st
+from recommender import FilmAuraRecommender
 
-# Add project root to sys.path
-sys.path.insert(0, os.path.dirname(__file__))
-
-from src.styles import get_custom_css
-from src.components import render_top_nav
-from src.data_loader import ensure_artifacts_exist
-from src.recommender import FilmAuraRecommender
-from src.views.landing import render_landing_view
-from src.views.onboarding_mood import render_mood_onboarding_view
-from src.views.onboarding_taste import render_taste_calibration_view
-from src.views.results import render_results_view
-from src.views.movie_detail import render_movie_detail_view
-from src.views.watchlist_view import render_watchlist_view
-from src.views.about_view import render_about_view
-
-# Streamlit Page Config
+# Page Configuration
 st.set_page_config(
-    page_title="FilmAura — ML-Powered Cinema Discovery",
+    page_title="FilmAura — Personalized Movie Recommender",
     page_icon="🎬",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
-# Inject Nocturne Cinema Theme CSS
-st.markdown(get_custom_css(), unsafe_allow_html=True)
+# Application Header
+st.title("🎬 FilmAura")
+st.markdown("#### *Your mood. Your taste. Your next movie.*")
+st.markdown(
+    "Welcome to **FilmAura**, an intelligent movie recommender system built for the "
+    "**Machine Learning Essentials** course. Select your current mood and preferred genre, "
+    "and optionally pick a favorite anchor movie to receive personalized, explainable recommendations."
+)
+st.divider()
 
-# Initialize Session State
-if "page" not in st.session_state:
-    st.session_state.page = "landing"
-if "selected_moods" not in st.session_state:
-    st.session_state.selected_moods = ["Dark", "Suspenseful"]
-if "selected_genres" not in st.session_state:
-    st.session_state.selected_genres = ["Sci-Fi", "Thriller"]
-if "anchor_movie_ids" not in st.session_state:
-    st.session_state.anchor_movie_ids = ["blade-runner-2049-2017"]
-if "watchlist" not in st.session_state:
-    st.session_state.watchlist = ["children-of-men-2006"]
-if "watched_list" not in st.session_state:
-    st.session_state.watched_list = []
-if "active_movie_id" not in st.session_state:
-    st.session_state.active_movie_id = "children-of-men-2006"
-if "hybrid_blend" not in st.session_state:
-    st.session_state.hybrid_blend = 70
-
-# Load Recommender with Resource Caching
+# Load Recommender Engine with caching
 @st.cache_resource
-def load_recommender() -> FilmAuraRecommender:
-    ensure_artifacts_exist()
-    return FilmAuraRecommender()
+def get_recommender():
+    try:
+        return FilmAuraRecommender(), None
+    except FileNotFoundError as e:
+        return None, str(e)
+    except Exception as e:
+        return None, f"Unexpected error loading model artifacts: {e}"
 
-try:
-    recommender = load_recommender()
-except Exception as e:
-    st.error(f"⚠️ Error initializing FilmAura Recommender Engine: {e}")
-    st.info("Please verify Python dependencies and run artifacts generation.")
+recommender, error_msg = get_recommender()
+
+# Check if model artifacts exist
+if error_msg:
+    st.error("⚠️ **Model Artifacts Not Found**")
+    st.info(
+        "The recommendation model has not been trained or exported yet.\n\n"
+        "**To generate artifacts:**\n"
+        "1. Open `notebooks/FilmAura_ML_Backend.ipynb` in Google Colab or Kaggle.\n"
+        "2. Run all cells to train the hybrid recommender on MovieLens.\n"
+        "3. Download the exported files from the `artifacts/` folder into your local `artifacts/` directory.\n\n"
+        f"*Details: {error_msg}*"
+    )
     st.stop()
 
-# Render Top Navigation Bar
-current_page = st.session_state.get("page", "landing")
-watchlist_count = len(st.session_state.get("watchlist", []))
-render_top_nav(active_page=current_page, watchlist_count=watchlist_count)
+# User Input Controls
+st.subheader("1. What are you in the mood for?")
 
-# Navigation Router
-if current_page == "landing":
-    render_landing_view()
-elif current_page == "onboarding_mood":
-    render_mood_onboarding_view()
-elif current_page == "onboarding_taste":
-    render_taste_calibration_view()
-elif current_page == "results":
-    render_results_view(recommender)
-elif current_page == "detail":
-    active_id = st.session_state.get("active_movie_id", "children-of-men-2006")
-    render_movie_detail_view(recommender, active_id)
-elif current_page == "watchlist":
-    render_watchlist_view(recommender)
-elif current_page == "methodology":
-    render_about_view()
-else:
-    render_landing_view()
+col1, col2 = st.columns(2)
+with col1:
+    moods = recommender.get_available_moods()
+    selected_mood = st.selectbox(
+        "Select your current mood:",
+        options=moods,
+        index=moods.index("Dark") if "Dark" in moods else 0,
+        help="Affective mood spectrum guiding the recommendation resonance."
+    )
+
+with col2:
+    genres = ["All Genres"] + recommender.get_available_genres()
+    selected_genre = st.selectbox(
+        "Select preferred genre:",
+        options=genres,
+        index=genres.index("Sci-Fi") if "Sci-Fi" in genres else 0,
+        help="Filters recommendations to include your chosen genre."
+    )
+
+st.subheader("2. (Optional) Anchor with a film you cherish")
+movies = recommender.get_movie_titles()
+movie_options = ["None (Recommend based purely on mood & genre)"] + [m["title"] for m in movies]
+selected_movie_title = st.selectbox(
+    "Pick a favorite movie to match visual and narrative tone:",
+    options=movie_options,
+    index=0,
+    help="When chosen, the model computes content and collaborative similarity to this seed film."
+)
+
+favorite_movie_id = None
+if selected_movie_title != "None (Recommend based purely on mood & genre)":
+    for m in movies:
+        if m["title"] == selected_movie_title:
+            favorite_movie_id = m["movieId"]
+            break
+
+col_top_k, col_btn = st.columns([1, 2])
+with col_top_k:
+    top_k = st.slider("Results to show:", min_value=3, max_value=10, value=5)
+
+with col_btn:
+    st.write("") # Spacing
+    st.write("")
+    recommend_clicked = st.button("✨ Recommend Movies", type="primary", use_container_width=True)
+
+st.divider()
+
+# Handle Recommendation Query
+if recommend_clicked or "has_run" in st.session_state:
+    st.session_state.has_run = True
+    
+    with st.spinner("Analyzing ratings, content vectors, and mood resonance..."):
+        recommendations = recommender.recommend(
+            mood=selected_mood,
+            genre=selected_genre if selected_genre != "All Genres" else None,
+            favorite_movie_id=favorite_movie_id,
+            top_k=top_k
+        )
+
+    if not recommendations:
+        st.warning("No movies matched all chosen criteria. Try picking 'All Genres' or choosing a different mood.")
+    else:
+        st.subheader(f"Top {len(recommendations)} FilmAura Recommendations")
+        
+        for i, film in enumerate(recommendations, 1):
+            with st.container(border=True):
+                c_title, c_score = st.columns([4, 1])
+                with c_title:
+                    st.markdown(f"### {i}. {film['title']} ({film['year']})")
+                with c_score:
+                    st.markdown(f"**{film['match_pct']}% Match**")
+
+                genres_str = " • ".join(film["genres"])
+                st.caption(f"🎭 **Genres:** {genres_str} &nbsp;|&nbsp; ⭐ **Rating:** {film['rating']} / 5.0 ({film['votes']:,} votes)")
+                
+                st.markdown(f"💡 **Why this movie?** {film['explanation']}")
+
+# Footer
+st.markdown("---")
+st.caption("FilmAura • Machine Learning Essentials (MLE) Course Project • Built with Python & Streamlit")

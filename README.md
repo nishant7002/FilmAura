@@ -1,247 +1,194 @@
-# FilmAura — ML-Powered Cinema Discovery Platform
+# FilmAura — Personalized Movie Recommendation System
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.3+-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![SciPy](https://img.shields.io/badge/SciPy-1.10+-8CAAE6?style=for-the-badge&logo=scipy&logoColor=white)](https://scipy.org)
 [![Pandas](https://img.shields.io/badge/Pandas-2.0+-150458?style=for-the-badge&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 
-> **"Your mood. Your taste. Your next movie."**
+> **Tagline:** *Your mood. Your taste. Your next movie.*
 
-FilmAura is an intelligent cinema discovery platform calibrated for cinephiles. It bridges emotional sentiment with mathematical recommender rigor, translating user moods, tonal preferences, and seed films into bespoke cinema recommendations with explainable rationales in under 60 seconds.
-
-Built as the capstone project for **Machine Learning Essentials (Semester 5)**, FilmAura combines:
-1. **Google Stitch UI Design**: Faithful implementation of the approved **Nocturne Cinema** aesthetic directly in Streamlit.
-2. **Machine Learning Backend**: Official **MovieLens 32M** dataset integration (`ratings.csv`, `movies.csv`, `tags.csv`, `links.csv`), an executable 14-section Jupyter research notebook, and a 5-tier hybrid recommendation system.
+**Course:** Machine Learning Essentials (MLE) — 3rd Year BTech CSE (AI/ML)  
+**Author:** Student Capstone Project  
+**Core Technologies:** Python, Scikit-learn, Pandas, NumPy, Streamlit, Jupyter Notebook
 
 ---
 
-## 🎨 Visual Source of Truth: Google Stitch Design System
+## 1. Project Overview
 
-The visual design is derived directly from the approved Google Stitch project `projects/6513193978623036163`:
-- **Theme**: *Nocturne Cinema* (Dark mode)
-- **Primary Canvas**: `#0e1323` (Midnight blue/slate)
-- **Container Surfaces**: `#1a1f30` (Cards), `#25293a` (High surface), `#2f3446` (Highest surface)
-- **Accents**:
-  - `#d0bcff` & `#a078ff` (Soft glowing lavender/violet for primary CTAs and headings)
-  - `#7bd0ff` (Electric cyan for match scores, badges, and diagnostic metrics)
-- **Typography**: `Inter` across all text hierarchies (display, headline, body, label).
-- **Aura Diagnostic Graph**: Transparent breakdown showing Content Similarity (40%), Collaborative Filtering (40%), Bayesian Popularity (10%), and Mood Alignment (10%).
+**FilmAura** is a personalized movie recommendation system designed to solve streaming **choice paralysis**. Instead of forcing users to scroll through endless carousels, FilmAura asks three simple questions:
+1. **Current Mood** (e.g. *Dark, Thoughtful, Happy, Romantic*)
+2. **Preferred Genre** (e.g. *Sci-Fi, Comedy, Drama*)
+3. **(Optional) Cherished Anchor Film** (e.g. *Inception, Blade Runner*)
+
+Using a 4-tier hybrid machine learning engine, FilmAura ranks suitable films and generates an intuitive, human-readable rationale explaining *why* each film was recommended.
 
 ---
 
-## 🧠 Machine Learning Backend Architecture
+## 2. Dataset Source & Attribution
+
+FilmAura uses the official **MovieLens 32M** benchmark dataset provided by GroupLens Research:
+- **Dataset Source:** [GroupLens MovieLens 32M](https://grouplens.org/datasets/movielens/32m/)
+- **Documentation:** [Official MovieLens README](https://files.grouplens.org/datasets/movielens/ml-32m-README.html)
+- **Files Used:**
+  - `ratings.csv`: ~32,000,000 ratings across 200,900 users.
+  - `movies.csv`: ~87,000 movie titles and pipe-separated genres.
+  - `tags.csv`: User-applied community tags for thematic content representation.
+  - `links.csv`: Identifiers linking to IMDb and TMDb.
+
+---
+
+## 3. Technology Stack
+
+- **Application & Frontend:** Streamlit (Python native interactive UI).
+- **Core ML Algorithms:** Scikit-learn (`TfidfVectorizer`, `cosine_similarity`, `TruncatedSVD`).
+- **Data Manipulation:** Pandas & NumPy (optimized `int32`/`float32` vector operations).
+- **Visualizations:** Matplotlib & Seaborn.
+- **Testing:** Pytest.
+- **Model Training:** Google Colab / Kaggle Notebooks (free cloud CPU/GPU environments).
+
+---
+
+## 4. Simplified Project Structure
 
 ```
-                       ┌─────────────────────────┐
-                       │   User Interaction UI   │
-                       │  (Mood, Genre, Anchor)  │
-                       └────────────┬────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                   FilmAura Hybrid Recommender Engine                   │
-├────────────────────┬────────────────────┬──────────────────────────────┤
-│ 1. Content-Based   │ 2. Item-Item CF    │ 3. SVD Matrix Factorization  │
-│    TF-IDF (1-2 gram│    Cosine on Item  │    Latent Factor Projections │
-│    Title+Genre+Tags│    Rating Vectors  │    (TruncatedSVD K=12)       │
-├────────────────────┼────────────────────┴──────────────────────────────┤
-│ 4. Bayesian Rating │ 5. Heuristic Mood Resonance Engine                │
-│    Shrinkage (WR)  │    10 Affective Spectrums (Genre + Tag Overlap)   │
-└────────────────────┴───────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│               Explainability & Dynamic Score Attribution               │
-│    • Natural Language Rationale ("Resonates with your Dark mood...")    │
-│    • Component Breakdown Percentages (Content / Collab / Pop / Mood)   │
-└────────────────────────────────────────────────────────────────────────┘
+FilmAura/
+├── app.py                             # Clean, minimal Streamlit web application
+├── recommender.py                     # Standalone inference engine (loads artifacts)
+├── requirements.txt                   # Standard Python dependencies
+├── README.md                          # Complete project documentation & viva guide
+├── .gitignore                         # Git exclusion rules
+├── artifacts/                         # Exported model files for frontend serving
+│   ├── config.json                    # Model hyperparameters & mood dictionary
+│   ├── movies_catalogue.csv           # Cleaned catalogue with ratings & moods
+│   ├── svd_components.npy             # SVD latent item factor matrix
+│   ├── tfidf_matrix.npz               # Sparse TF-IDF content matrix
+│   ├── tfidf_vectorizer.pkl           # Fitted TF-IDF vectorizer
+│   └── README.md                      # Artifact bundle documentation
+├── notebooks/
+│   └── FilmAura_ML_Backend.ipynb      # The complete 19-stage ML research notebook
+├── data/
+│   └── dev/                           # Small test fixtures for unit tests
+└── tests/
+    └── test_recommender.py            # Unit tests for the recommendation engine
 ```
-
-### 1. Dual-Mode Dataset Architecture
-- **Development Mode (`dev`)**: A verified MovieLens-formatted subset located in `data/dev/` (`movies.csv`, `ratings.csv`, `tags.csv`, `links.csv`) with 60 iconic cinephile titles and ~4,000 ratings. Enables instant local execution, rapid CI testing, and development without downloading multi-gigabyte files.
-- **Full-Data Mode (`full`)**: Connects directly to the complete GroupLens **MovieLens 32M** benchmark dataset (`data/ml-32m/`).
-  - *Strict Error Handling*: If full mode is selected and files are missing, the loader raises an explicit, descriptive `FileNotFoundError` with download instructions. **It never silently substitutes a smaller dataset.**
-
-### 2. 10 Documented Heuristic Mood Archetypes
-FilmAura maps MovieLens genres and aggregated community tags into 10 cinephile moods:
-1. **Happy**: Uplifting, bright, feel-good (*Animation, Children, Comedy, Musical*)
-2. **Relaxed**: Gentle, calm, contemplative (*Documentary, gentle Comedy*)
-3. **Emotional**: Poignant, deep human connection (*Drama, Romance*)
-4. **Romantic**: Intimate, passionate, courtship (*Romance, Drama*)
-5. **Dark**: Gritty, shadowy, morally ambiguous (*Film-Noir, Crime, Horror, Thriller*)
-6. **Suspenseful**: Taut cognitive tension, high-stakes mystery (*Thriller, Mystery, Crime*)
-7. **Adventurous**: Epic exploration, heroic journeys (*Adventure, Action, Sci-Fi, Fantasy*)
-8. **Funny**: Satirical, absurd, witty (*Comedy*)
-9. **Thoughtful**: Existential, philosophical, mind-bending (*Sci-Fi, Mystery, Drama*)
-10. **Motivational**: Inspiring perseverance and human triumph (*Drama, Documentary*)
-
-### 3. Five-Tier Hybrid Model Formulation
-Candidate movie $i$ is scored for user $u$ as:
-$$S_{\text{hybrid}}(u, i) = w_c \cdot S_{\text{content}}(i) + w_k \cdot S_{\text{item\_knn}}(i) + w_{svd} \cdot S_{\text{svd}}(i) + w_p \cdot S_{\text{pop}}(i) + w_m \cdot S_{\text{mood}}(i)$$
-
-- **Cold-Start Fallback**: If a new user arrives with zero ratings and selects no anchor film, weights automatically shift to $w_p = 0.40$ (Bayesian Popularity) and $w_m = 0.35$ (Mood Resonance), filtered strictly by declared genres.
-
-### 4. Offline Benchmark Validation Results
-Evaluated on holdout test users:
-| Model / Paradigm | Precision@5 | Recall@5 | HitRate@5 | NDCG@5 | Catalog Coverage |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Popularity Baseline (Bayesian WR)** | 0.120 | 0.080 | 0.450 | 0.135 | 25.0% |
-| **Content-Based (TF-IDF + Cosine)** | 0.220 | 0.150 | 0.680 | 0.230 | 75.0% |
-| **Item-Item Collaborative Filtering** | 0.245 | 0.170 | 0.760 | 0.265 | 65.0% |
-| **Matrix Factorization (TruncatedSVD)** | 0.230 | 0.160 | 0.720 | 0.245 | 70.0% |
-| **FilmAura Hybrid (Production)** | **0.288** | **0.201** | **0.840** | **0.299** | **90.0%** |
-
-*(HitRate@10 reaches **98.0%** with NDCG@10 of **0.3375** and Novelty of **5.896**).*
 
 ---
 
-## 📓 14-Section Executable Notebook
+## 5. Machine Learning Pipeline (19 Required Stages)
 
-The complete research and training notebook is located at:
+The central deliverable is the Jupyter notebook:  
 `notebooks/FilmAura_ML_Backend.ipynb`
 
-### Notebook Table of Contents:
-- **Section 1**: Problem definition & theoretical foundations (ranking vs rating prediction, cold-start formulation).
-- **Section 2**: Dataset acquisition, schema inspection, and environment setup (Colab/Kaggle).
-- **Section 3**: Data quality auditing (missing values, duplicates, rating boundary validation).
-- **Section 4**: Exploratory Data Analysis (EDA) with Matplotlib/Seaborn visualizations (Figures 1 to 5).
-- **Section 5**: Preprocessing & heuristic feature engineering (tag aggregation, 10-mood scoring).
-- **Section 6**: Content-based recommender (TF-IDF vector space, cosine similarity, queries).
-- **Section 7**: Collaborative filtering (Item-Item nearest neighbors over sparse CSR matrix).
-- **Section 8**: Matrix factorization (TruncatedSVD latent dimensions, variance curve).
-- **Section 9**: FilmAura hybrid recommendation engine (blending weights & cold-start testing).
-- **Section 10**: Explainability mechanism & diagnostic attribution breakdown.
-- **Section 11**: Quantitative offline evaluation & benchmark comparison table.
-- **Section 12**: Discussion of results & viva defense talking points.
-- **Section 13**: System limitations and failure modes (sparsity, popularity bias).
-- **Section 14**: Export to production (saving `.pkl`, `.npz`, `.npy`, `.csv`, `.json` to `artifacts/`).
-
-### Running in Google Colab / Kaggle:
-1. Open Google Colab or Kaggle Notebooks.
-2. Upload `notebooks/FilmAura_ML_Backend.ipynb` and the `src/` directory.
-3. Download MovieLens 32M:
-   ```bash
-   !wget https://files.grouplens.org/datasets/movielens/ml-32m.zip
-   !unzip -q ml-32m.zip -d data/
-   ```
-4. Set environment variable:
-   ```python
-   import os
-   os.environ['MOVIELENS_DATA_DIR'] = 'data/ml-32m'
-   os.environ['FILMAURA_MODE'] = 'full'
-   ```
-5. Run all cells.
+It is structured into all 19 mandatory course stages:
+1. **Problem Definition**: Choice paralysis, affective disconnect, top-K ranking vs. rating prediction.
+2. **Dataset Acquisition**: Automated download of MovieLens 32M with SSL verification handling.
+3. **Dataset Understanding**: Dimensions, data types, timestamp analysis, relational schema.
+4. **Data Quality Checks**: Auditing missing values, duplicates, and 0.5–5.0 half-star boundaries.
+5. **Exploratory Data Analysis (EDA)**: Matplotlib/Seaborn plots (Figures 1 to 4: rating distributions, active user activity, genre representation, release year histograms).
+6. **Data Preprocessing**: Title cleaning, release year extraction via regex, genre parsing into lists.
+7. **Feature Engineering**: 10-mood heuristic feature engineering (Happy, Relaxed, Emotional, Romantic, Dark, Suspenseful, Adventurous, Funny, Thoughtful, Motivational).
+8. **Feature Selection**: Filtering active items ($\ge 25$ ratings) for collaborative density.
+9. **Train, Validation, and Test Split**: Chronological temporal split (80% Train, 10% Validation, 10% Test) to prevent data leakage.
+10. **Baseline Model**: Bayesian shrinkage weighted rating formula:
+    $$WR = \frac{v}{v+m} R + \frac{m}{v+m} C$$
+11. **Model Selection**: Comparing Popularity, Content-Based, Item-Item CF, and SVD.
+12. **Model Training**: TF-IDF n-grams, sparse CSR rating matrix, and TruncatedSVD.
+13. **Hyperparameter Tuning**: SVD components ($K=15$) and hybrid blend weights on validation split.
+14. **Evaluation**: Computing Precision@K, Recall@K, HitRate@K, and NDCG@K on test split.
+15. **Model Comparison**: Benchmark evaluation table and comparison bar charts (Figures 6 & 7).
+16. **Error Analysis**: Cold-start diagnosis, popularity bias mitigation, and long-tail tag sparsity.
+17. **Model Interpretation**: Dynamic natural language explanation generation.
+18. **Final Recommendation Demonstration**: Demonstration of seeded and pure cold-start queries.
+19. **Conclusion & Model Export**: Summary for viva defense and serializing artifacts to `artifacts/`.
 
 ---
 
-## 🚀 Exact Windows PowerShell Commands to Run Locally
+## 6. How to Execute the Notebook in Google Colab
 
-### 1. Navigate to Project Directory
+1. Open **[colab.research.google.com](https://colab.research.google.com)**.
+2. Click **Upload** $\rightarrow$ select `notebooks/FilmAura_ML_Backend.ipynb`.
+3. In the top menu, click **Runtime $\rightarrow$ Run all** (`Ctrl + F9`).
+4. Cell 1 will automatically:
+   - Download the official MovieLens 32M archive (`--no-check-certificate`).
+   - Extract it into `data/ml-32m/`.
+   - Run all 19 stages and export production artifacts to `/content/FilmAura/artifacts/`.
+
+---
+
+## 7. How to Execute the Notebook in Kaggle
+
+1. Go to **[kaggle.com/code](https://kaggle.com/code)** and click **"New Notebook"**.
+2. Click **File $\rightarrow$ Import Notebook** $\rightarrow$ select `FilmAura_ML_Backend.ipynb`.
+3. In the right panel under **Settings**, ensure Internet is **ON**.
+4. Click **Run All** (`Shift + Enter`).
+5. Artifacts are automatically exported to `/kaggle/working/artifacts/`.
+
+---
+
+## 8. How to Transfer Model Artifacts to Your Local Project
+
+After running in Colab or Kaggle:
+1. Run this in a notebook cell to zip and download:
+   ```python
+   from google.colab import files
+   !zip -j -r filmaura_artifacts.zip /content/FilmAura/artifacts/*
+   files.download('filmaura_artifacts.zip')
+   ```
+2. Unzip the downloaded file and place the contents directly into your local `artifacts/` folder:
+   ```
+   FilmAura/artifacts/
+     ├── config.json
+     ├── movies_catalogue.csv
+     ├── svd_components.npy
+     ├── tfidf_matrix.npz
+     └── tfidf_vectorizer.pkl
+   ```
+
+---
+
+## 9. How to Install and Run FilmAura on Windows
+
+### Step 1: Open PowerShell in the Project Directory
 ```powershell
 cd "C:\Users\Admin\OneDrive\Desktop\Nishant AU\Sem 5\MLE\Project\FilmAura"
 ```
 
-### 2. Verify Python 3.11 Environment
+### Step 2: (Optional) Create & Activate a Virtual Environment
 ```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" --version
+& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" -m venv venv
+.\venv\Scripts\Activate.ps1
 ```
 
-### 3. Install Required Dependencies
+### Step 3: Install Dependencies
 ```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-### 4. (Optional) Re-generate Model Artifacts
+### Step 4: Run Automated Unit Tests
 ```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" src/film_aura/export_artifacts.py
+pytest tests/test_recommender.py -v
 ```
 
-### 5. Run All Automated Unit Tests (25 Tests)
+### Step 5: Launch the Streamlit Frontend
 ```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" -m pytest tests/ -v
+streamlit run app.py
 ```
-
-### 6. Launch the FilmAura Streamlit Application
-```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" -m streamlit run app.py
-```
-*The application will launch in your default browser at `http://localhost:8501`.*
+*FilmAura will open automatically in your browser at `http://localhost:8501`.*
 
 ---
 
-## ☁️ Deployment Instructions (Streamlit Community Cloud)
+## 10. Troubleshooting Common Issues
 
-FilmAura is architected for zero-configuration, 1-click deployment on **Streamlit Community Cloud**:
-
-1. **Commit and Push to GitHub**:
-   ```powershell
-   git add .
-   git commit -m "FilmAura Phase 2: Full ML backend, MovieLens integration, and 14-section notebook"
-   git push origin master
-   ```
-2. **Deploy on Streamlit Community Cloud**:
-   - Navigate to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
-   - Click **"New app"**.
-   - Select your repository (`FilmAura`), branch (`master`), and main file path (`app.py`).
-   - Click **"Deploy!"**.
-   - Streamlit Cloud installs `requirements.txt`, auto-loads precomputed artifacts from `artifacts/`, and deploys the production URL.
+| Issue | Cause | Solution |
+| :--- | :--- | :--- |
+| **`FileNotFoundError: Required model artifacts are missing`** | App started before training notebook finished or artifacts not downloaded. | Make sure `movies_catalogue.csv`, `tfidf_vectorizer.pkl`, etc. are placed in `artifacts/`. |
+| **`wget certificate error` in Colab** | University CA certificate not recognized. | Handled automatically in Cell 1 using `--no-check-certificate`. |
+| **Colab Session Out of Memory (OOM)** | Creating dense arrays from 32M interactions. | Handled in notebook: we use sparse CSR matrices and vector mapping instead of dense arrays. |
 
 ---
 
-## 📂 Project Structure
+## 11. Project Limitations
 
-```
-FilmAura/
-├── DESIGN.md                          # Full design system & token specification from Stitch
-├── README.md                          # Comprehensive setup, ML architecture, & viva guide
-├── requirements.txt                   # Production Python dependencies
-├── app.py                             # Main Streamlit application entrypoint
-├── artifacts/                         # Exported production model artifacts
-│   ├── movies_catalogue.csv           # Clean catalogue with parsed metadata & moods
-│   ├── tfidf_vectorizer.pkl           # Fitted Scikit-Learn TF-IDF vectorizer
-│   ├── tfidf_matrix.npz               # Sparse TF-IDF matrix
-│   ├── item_similarity.npy            # Item-Item collaborative similarity matrix
-│   ├── svd_components.npy             # SVD item latent factor components
-│   ├── config.json                    # Model hyperparameters and mood mappings
-│   └── evaluation_metrics.json        # Benchmark offline evaluation metrics
-├── data/
-│   ├── dev/                           # Verified MovieLens development dataset (committed)
-│   │   ├── movies.csv
-│   │   ├── ratings.csv
-│   │   ├── tags.csv
-│   │   └── links.csv
-│   └── ml-32m/                        # Full MovieLens 32M directory (git-ignored)
-├── notebooks/
-│   └── FilmAura_ML_Backend.ipynb      # Complete 14-section executable ML backend notebook
-├── src/
-│   ├── __init__.py
-│   ├── styles.py                      # Nocturne Cinema custom CSS stylesheet
-│   ├── data_loader.py                 # Frontend data loader & artifact manager
-│   ├── recommender.py                 # Frontend recommender engine interface
-│   ├── components.py                  # Reusable UI components & Aura Diagnostic widget
-│   ├── views/                         # Application screen views (Stitch screens 1-7)
-│   └── film_aura/                     # Machine Learning Backend Package
-│       ├── __init__.py
-│       ├── config.py                  # Paths, mood mappings, default hybrid weights
-│       ├── data_loader.py             # Dual-mode MovieLens loader & CSR matrix builder
-│       ├── mood_mapper.py             # 10-mood heuristic feature engineering engine
-│       ├── models.py                  # Popularity, TF-IDF, Item-Item, SVD, & Hybrid models
-│       ├── metrics.py                 # Precision@K, Recall@K, NDCG@K, HitRate@K, Coverage
-│       ├── recommender.py             # High-speed production inference engine
-│       ├── export_artifacts.py        # Offline training and artifact export script
-│       ├── make_dev_dataset.py        # Development dataset generator
-│       └── generate_notebook.py       # 14-section Jupyter notebook builder
-└── tests/
-    ├── test_recommender.py            # Recommender inference unit tests
-    └── test_backend.py                # Comprehensive ML backend & metric unit tests (25 tests)
-```
-
----
-
-## 📜 Course Credits & Academic Context
-
-- **Course**: Machine Learning Essentials (Sem 5)
-- **Dataset**: GroupLens Research, MovieLens 32M
-- **Visual Source of Truth**: Google Stitch (`FilmAura`, project `6513193978623036163`)
-- **Theme**: Nocturne Cinema
+1. **Tag Sparsity**: Obscure movies with few reviews rely primarily on genres rather than user tags.
+2. **Heuristic Mood Boundaries**: Mood mappings are based on rule-based feature engineering, which provides interpretability but may not capture all subtle emotional nuances.
+3. **Streaming Rights**: MovieLens does not include real-time regional streaming provider licenses.

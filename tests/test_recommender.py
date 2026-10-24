@@ -1,88 +1,78 @@
 """
-Unit tests for FilmAura Recommender Engine.
+Essential Unit Tests for FilmAura Recommender Engine.
+Validates artifact loading, top-K ranking, mood/genre filtering, and error handling.
 """
 
 import sys
 import os
+from pathlib import Path
 import pytest
 
-# Ensure project root is in sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add project root to sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.recommender import FilmAuraRecommender
-from src.data_loader import get_movies_dataframe
+from recommender import FilmAuraRecommender
 
 @pytest.fixture
 def recommender():
     return FilmAuraRecommender()
 
-def test_dataframe_loaded(recommender):
-    df = recommender.df
-    assert not df.empty
-    assert "title" in df.columns
-    assert "genres" in df.columns
-    assert "moods" in df.columns
-    assert len(df) >= 10
+def test_artifacts_loaded(recommender):
+    """Verify catalogue and TF-IDF matrices are properly loaded."""
+    assert recommender.is_loaded
+    assert recommender.catalogue is not None
+    assert len(recommender.catalogue) >= 10
+    assert "display_title" in recommender.catalogue.columns
+    assert "genres_list" in recommender.catalogue.columns
 
-def test_tfidf_cosine_similarity(recommender):
-    assert recommender.tfidf_matrix is not None
-    assert recommender.cosine_sim.shape == (len(recommender.df), len(recommender.df))
-    # Self similarity should be 1.0 (or very close)
-    for i in range(len(recommender.df)):
-        assert abs(recommender.cosine_sim[i, i] - 1.0) < 1e-4
+def test_get_available_genres(recommender):
+    """Verify available genres are extracted and non-empty."""
+    genres = recommender.get_available_genres()
+    assert isinstance(genres, list)
+    assert len(genres) > 0
+    assert "Drama" in genres or "Sci-Fi" in genres or "Action" in genres
 
-def test_recommendations_structure(recommender):
-    recs = recommender.recommend(
-        primary_mood="Dark",
-        secondary_mood="Suspenseful",
-        anchor_movie_ids=["blade-runner-2049-2017"],
-        top_n=5
-    )
-    assert len(recs) > 0
+def test_get_available_moods(recommender):
+    """Verify all 10 documented moods are available."""
+    moods = recommender.get_available_moods()
+    assert len(moods) == 10
+    assert "Happy" in moods
+    assert "Dark" in moods
+    assert "Suspenseful" in moods
+
+def test_recommend_cold_start(recommender):
+    """Verify recommendations work when no seed film is provided (cold start)."""
+    recs = recommender.recommend(mood="Happy", genre="Animation", favorite_movie_id=None, top_k=5)
     assert len(recs) <= 5
     for r in recs:
-        assert "id" in r
         assert "title" in r
-        assert "aura_match_pct" in r
-        assert "rationale" in r
-        assert "breakdown" in r
-        assert 80 <= r["aura_match_pct"] <= 100
-        # Seed movie should not recommend itself
-        assert r["id"] != "blade-runner-2049-2017"
+        assert "year" in r
+        assert "genres" in r
+        assert "rating" in r
+        assert "match_pct" in r
+        assert "explanation" in r
+        assert 80 <= r["match_pct"] <= 100
+        # If genre filter active, verify genre match
+        assert "Animation" in r["genres"]
 
-def test_genre_filtering(recommender):
-    recs = recommender.recommend(
-        primary_mood="Dark",
-        selected_genres=["War"],
-        top_n=5
-    )
+def test_recommend_with_seed_movie(recommender):
+    """Verify recommendations when a favorite seed movie is chosen."""
+    # Pick first movie as seed
+    sample_mid = int(recommender.catalogue.iloc[0]["movieId"])
+    sample_title = recommender.catalogue.iloc[0]["display_title"]
+
+    recs = recommender.recommend(mood="Dark", favorite_movie_id=sample_mid, top_k=5)
+    assert len(recs) <= 5
     for r in recs:
-        assert "War" in r["genres"]
+        # Seed film should never recommend itself
+        assert r["movieId"] != sample_mid
+        assert r["title"] != sample_title
+        assert "explanation" in r
 
-def test_runtime_filtering(recommender):
-    recs = recommender.recommend(
-        primary_mood="Dark",
-        filter_under_2h=True,
-        top_n=5
-    )
-    for r in recs:
-        assert r["runtime"] <= 120
-
-def test_sorting_by_rating(recommender):
-    recs = recommender.recommend(
-        sort_by="Highest Rating",
-        top_n=5
-    )
-    ratings = [r["rating"] for r in recs]
-    assert ratings == sorted(ratings, reverse=True)
-
-def test_get_movie_by_id(recommender):
-    movie = recommender.get_movie_by_id("children-of-men-2006")
-    assert movie is not None
-    assert movie["title"] == "Children of Men"
-    assert "genres" in movie
-    assert "rating" in movie
-
-def test_get_invalid_movie_by_id(recommender):
-    movie = recommender.get_movie_by_id("non-existent-id-9999")
-    assert movie is None
+def test_missing_artifacts_error(tmp_path):
+    """Verify a clean FileNotFoundError is raised when artifacts directory is empty."""
+    with pytest.raises(FileNotFoundError) as exc_info:
+        FilmAuraRecommender(artifacts_dir=str(tmp_path))
+    assert "Required model artifacts are missing" in str(exc_info.value)

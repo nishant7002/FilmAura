@@ -213,8 +213,7 @@ FilmAura/
 │   │   └── links.csv
 │   └── ml-32m/                        # Full MovieLens 32M directory (git-ignored)
 ├── notebooks/
-│   ├── FilmAura_ML_Backend.ipynb      # Complete 14-section executable ML backend notebook
-│   └── FilmAura_ML_Recommender.ipynb  # Exploratory prototyping notebook
+│   └── FilmAura_ML_Backend.ipynb      # Complete 14-section executable ML backend notebook
 ├── src/
 │   ├── __init__.py
 │   ├── styles.py                      # Nocturne Cinema custom CSS stylesheet

@@ -83,10 +83,9 @@ class FilmAuraRecommender:
 
         self.catalogue = df.reset_index(drop=True)
 
-        for idx, row in self.catalogue.iterrows():
-            mid = int(row["movieId"])
-            self.movie_id_to_idx[mid] = idx
-            self.idx_to_movie_id[idx] = mid
+        mids = self.catalogue["movieId"].astype(int).tolist()
+        self.movie_id_to_idx = {mid: idx for idx, mid in enumerate(mids)}
+        self.idx_to_movie_id = {idx: mid for idx, mid in enumerate(mids)}
 
         # 2. Load TF-IDF Models
         with open(required_files["tfidf_vec"], "rb") as f:
@@ -118,17 +117,25 @@ class FilmAuraRecommender:
         """Returns list of supported mood categories."""
         return SUPPORTED_MOODS
 
-    def get_movie_titles(self) -> List[Dict[str, Any]]:
-        """Returns list of movies formatted for selection dropdowns."""
+    def get_movie_titles(self, limit: Optional[int] = 1000) -> List[Dict[str, Any]]:
+        """Returns list of popular movies formatted for selection dropdowns."""
         if self.catalogue is None:
             return []
-        movies = []
-        for _, row in self.catalogue.iterrows():
-            movies.append({
-                "movieId": int(row["movieId"]),
-                "title": f"{row['display_title']} ({row['year']})"
-            })
-        return sorted(movies, key=lambda x: x["title"])
+        cache_key = f"_cached_movies_{limit}"
+        if hasattr(self, cache_key) and getattr(self, cache_key) is not None:
+            return getattr(self, cache_key)
+
+        if limit and limit < len(self.catalogue):
+            df_subset = self.catalogue.sort_values(by="rating_count", ascending=False).head(limit)
+        else:
+            df_subset = self.catalogue
+
+        titles = (df_subset["display_title"].fillna("Untitled").astype(str) + " (" + df_subset["year"].astype(str) + ")").tolist()
+        mids = df_subset["movieId"].astype(int).tolist()
+        movies = [{"movieId": m, "title": t} for m, t in zip(mids, titles)]
+        movies.sort(key=lambda x: str(x["title"]))
+        setattr(self, cache_key, movies)
+        return movies
 
     def recommend(
         self,
@@ -153,16 +160,43 @@ class FilmAuraRecommender:
         else:
             content_sims = np.full(len(self.catalogue), 0.5)
 
-        # 2. Bayesian Shrinkage Prior Parameters
+        # 2. Bayesian Shrinkage Prior Parameters (Vectorized)
         C = float(self.catalogue["rating_mean"].mean())
-        m = float(self.catalogue["rating_count"].quantile(0.25))
-        m = max(1.0, m)
+        m = max(1.0, float(self.catalogue["rating_count"].quantile(0.25)))
+        v = self.catalogue["rating_count"].values
+        R = self.catalogue["rating_mean"].values
+        wr = (v / (v + m)) * R + (m / (v + m)) * C
+        s_pop = np.clip((wr - 0.5) / 4.5, 0.0, 1.0)
 
         # 3. Dynamic Hybrid Weights
         if is_cold_start:
             w_content, w_mood, w_pop = 0.15, 0.45, 0.40
         else:
             w_content, w_mood, w_pop = 0.45, 0.35, 0.20
+
+        # 4. Mood Scores Vectorized
+        target_mood = mood.lower() if mood else None
+        if target_mood:
+            s_mood = np.array([m.get(target_mood, 0.35) if isinstance(m, dict) else 0.50 for m in self.catalogue["moods"]])
+        else:
+            s_mood = np.full(len(self.catalogue), 0.50)
+
+        # 5. Composite Hybrid Score (Vectorized in NumPy)
+        composite = (w_content * content_sims) + (w_mood * s_mood) + (w_pop * s_pop)
+
+        # 6. Apply Filtering Mask
+        mask = np.ones(len(self.catalogue), dtype=bool)
+        if favorite_movie_id and favorite_movie_id in self.movie_id_to_idx:
+            mask[self.movie_id_to_idx[favorite_movie_id]] = False
+
+        if genre and genre != "All Genres":
+            genre_match = np.array([genre in g for g in self.catalogue["genres_list"]], dtype=bool)
+            mask &= genre_match
+
+        composite[~mask] = -999.0
+
+        # 7. Select Top-K Candidate Indices
+        top_indices = np.argsort(composite)[::-1][:top_k]
 
         fav_title = None
         if not is_cold_start:
@@ -171,37 +205,14 @@ class FilmAuraRecommender:
                 fav_title = fav_row.iloc[0]["display_title"]
 
         results = []
-        for idx, row in self.catalogue.iterrows():
-            mid = int(row["movieId"])
-
-            # Exclude the seed movie itself
-            if favorite_movie_id and mid == favorite_movie_id:
+        for idx in top_indices:
+            score = float(composite[idx])
+            if score < -100.0:
                 continue
 
-            # Genre filter: must match selected genre if specified
-            if genre and genre != "All Genres":
-                if genre not in row["genres_list"]:
-                    continue
-
-            # Content score
-            s_content = float(content_sims[idx])
-
-            # Mood score
-            m_scores = row.get("moods", {})
-            if mood and isinstance(m_scores, dict):
-                s_mood = float(m_scores.get(mood.lower(), 0.35))
-            else:
-                s_mood = 0.50
-
-            # Bayesian weighted popularity
-            v = float(row["rating_count"])
-            R = float(row["rating_mean"])
-            wr = (v / (v + m)) * R + (m / (v + m)) * C
-            s_pop = float(np.clip((wr - 0.5) / 4.5, 0.0, 1.0))
-
-            # Composite hybrid score
-            composite = (w_content * s_content) + (w_mood * s_mood) + (w_pop * s_pop)
-            match_pct = int(np.clip(80 + (composite * 20), 82, 99))
+            row = self.catalogue.iloc[idx]
+            mid = int(row["movieId"])
+            match_pct = int(np.clip(80 + (score * 20), 82, 99))
 
             # Natural Language Explanation
             reasons = []
@@ -225,10 +236,8 @@ class FilmAuraRecommender:
                 "rating": float(row["rating_mean"]),
                 "votes": int(row["rating_count"]),
                 "match_pct": match_pct,
-                "composite_score": composite,
+                "composite_score": score,
                 "explanation": explanation
             })
 
-        # Sort descending by composite score, then by rating
-        results.sort(key=lambda x: (x["composite_score"], x["rating"]), reverse=True)
-        return results[:top_k]
+        return results

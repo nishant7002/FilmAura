@@ -1,7 +1,7 @@
 {
-  "dataset": "MovieLens 32M",
-  "num_catalogue_movies": 21226,
-  "num_training_ratings": 25343615,
+  "dataset": "MovieLens 32M (Full Scale)",
+  "num_catalogue_movies": 26428,
+  "num_training_ratings": 25422228,
   "hybrid_weights": {
     "content": 0.4,
     "collab": 0.25,

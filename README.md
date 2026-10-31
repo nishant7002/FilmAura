@@ -1,7 +1,8 @@
 # FilmAura — Personalized Movie Recommendation System
 
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![React](https://img.shields.io/badge/React-18.3+-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-6.0+-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.3+-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
 [![Pandas](https://img.shields.io/badge/Pandas-2.0+-150458?style=for-the-badge&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 
@@ -9,7 +10,7 @@
 
 **Course:** Machine Learning Essentials (MLE) — 3rd Year BTech CSE (AI/ML)  
 **Author:** Student Capstone Project  
-**Core Technologies:** Python, Scikit-learn, Pandas, NumPy, Streamlit, Jupyter Notebook
+**Core Technologies:** Python, Scikit-learn, React (Vite), Starlette / Uvicorn, Pandas, NumPy, Jupyter Notebook
 
 ---
 
@@ -39,9 +40,11 @@ FilmAura uses the official **MovieLens 32M** benchmark dataset provided by Group
 
 ## 3. Technology Stack
 
-- **Application & Frontend:** Streamlit (Python native interactive UI).
+- **Frontend Application:** React 18 with Vite (Modern component architecture, glassmorphism UI, interactive cursor animations).
+- **Backend API & Server:** Python Starlette / Uvicorn (High-performance async ASGI server with CORS & static React serving).
 - **Core ML Algorithms:** Scikit-learn (`TfidfVectorizer`, `cosine_similarity`, `TruncatedSVD`).
-- **Data Manipulation:** Pandas & NumPy (optimized `int32`/`float32` vector operations).
+- **Data Manipulation:** Pandas & NumPy (Vectorized array calculations & Bayesian shrinkage).
+- **Sparse Computation:** SciPy (`scipy.sparse.csr_matrix` for memory-efficient candidate ranking).
 - **Visualizations:** Matplotlib & Seaborn.
 - **Testing:** Pytest.
 - **Model Training:** Google Colab / Kaggle Notebooks (free cloud CPU/GPU environments).
@@ -52,11 +55,22 @@ FilmAura uses the official **MovieLens 32M** benchmark dataset provided by Group
 
 ```
 FilmAura/
-├── app.py                             # Clean, minimal Streamlit web application
-├── recommender.py                     # Standalone inference engine (loads artifacts)
+├── server.py                          # Unified Python API server (serves React frontend & ML endpoints)
+├── recommender.py                     # Standalone vectorized inference engine (loads artifacts)
 ├── requirements.txt                   # Standard Python dependencies
 ├── README.md                          # Complete project documentation & viva guide
 ├── .gitignore                         # Git exclusion rules
+├── frontend/                          # Modern React Frontend (Vite)
+│   ├── index.html                     # HTML root with fonts & meta
+│   ├── package.json                   # Node dependencies (React 18, Vite)
+│   ├── vite.config.js                 # Vite proxy & build configuration
+│   ├── src/
+│   │   ├── main.jsx                   # React root mount
+│   │   ├── App.jsx                    # Core recommendation UI component
+│   │   ├── index.css                  # Custom cinematic theme, glowing cursor & animations
+│   │   └── components/
+│   │       └── CursorFollower.jsx     # Interactive inertia-tracked cursor glow trail
+│   └── dist/                          # Production-ready pre-built React static assets
 ├── artifacts/                         # Exported model files for frontend serving
 │   ├── config.json                    # Model hyperparameters & mood dictionary
 │   ├── movies_catalogue.csv           # Cleaned catalogue with ratings & moods
@@ -65,9 +79,9 @@ FilmAura/
 │   ├── tfidf_vectorizer.pkl           # Fitted TF-IDF vectorizer
 │   └── README.md                      # Artifact bundle documentation
 ├── notebooks/
-│   └── FilmAura_ML_Backend.ipynb      # The complete 19-stage ML research notebook
-├── data/
-│   └── dev/                           # Small test fixtures for unit tests
+│   ├── FilmAura_ML_Backend_Full_32M.ipynb  # Complete 100% MovieLens 32M training pipeline (Kaggle/Colab)
+│   └── FilmAura_ML_Backend_lite.ipynb      # Fast development prototype pipeline
+├── app.py                             # Legacy Streamlit alternative
 └── tests/
     └── test_recommender.py            # Unit tests for the recommendation engine
 ```
@@ -76,10 +90,11 @@ FilmAura/
 
 ## 5. Machine Learning Pipeline (19 Required Stages)
 
-The central deliverable is the Jupyter notebook:  
-`notebooks/FilmAura_ML_Backend.ipynb`
+The central research and training deliverable is available in two dedicated notebooks:
+- **`notebooks/FilmAura_ML_Backend_Full_32M.ipynb`**: Trains on the **complete, unsampled MovieLens 32M dataset (~32,000,000 ratings, 87,500+ movies, 200,900+ users, 2,050,000+ tags)** using memory-optimized sparse CSR representations.
+- **`notebooks/FilmAura_ML_Backend_lite.ipynb`**: Lightweight prototype notebook for fast local verification.
 
-It is structured into all 19 mandatory course stages:
+Both notebooks are organized across all 19 mandatory course stages:
 1. **Problem Definition**: Choice paralysis, affective disconnect, top-K ranking vs. rating prediction.
 2. **Dataset Acquisition**: Automated download of MovieLens 32M with SSL verification handling.
 3. **Dataset Understanding**: Dimensions, data types, timestamp analysis, relational schema.
@@ -87,7 +102,7 @@ It is structured into all 19 mandatory course stages:
 5. **Exploratory Data Analysis (EDA)**: Matplotlib/Seaborn plots (Figures 1 to 4: rating distributions, active user activity, genre representation, release year histograms).
 6. **Data Preprocessing**: Title cleaning, release year extraction via regex, genre parsing into lists.
 7. **Feature Engineering**: 10-mood heuristic feature engineering (Happy, Relaxed, Emotional, Romantic, Dark, Suspenseful, Adventurous, Funny, Thoughtful, Motivational).
-8. **Feature Selection**: Filtering active items ($\ge 25$ ratings) for collaborative density.
+8. **Feature Selection**: Filtering active items ($\ge 15$ ratings) for collaborative density.
 9. **Train, Validation, and Test Split**: Chronological temporal split (80% Train, 10% Validation, 10% Test) to prevent data leakage.
 10. **Baseline Model**: Bayesian shrinkage weighted rating formula:
     $$WR = \frac{v}{v+m} R + \frac{m}{v+m} C$$
@@ -103,25 +118,23 @@ It is structured into all 19 mandatory course stages:
 
 ---
 
-## 6. How to Execute the Notebook in Google Colab
-
-1. Open **[colab.research.google.com](https://colab.research.google.com)**.
-2. Click **Upload** $\rightarrow$ select `notebooks/FilmAura_ML_Backend.ipynb`.
-3. In the top menu, click **Runtime $\rightarrow$ Run all** (`Ctrl + F9`).
-4. Cell 1 will automatically:
-   - Download the official MovieLens 32M archive (`--no-check-certificate`).
-   - Extract it into `data/ml-32m/`.
-   - Run all 19 stages and export production artifacts to `/content/FilmAura/artifacts/`.
-
----
-
-## 7. How to Execute the Notebook in Kaggle
+## 6. How to Execute the Full 32M Notebook on Kaggle
 
 1. Go to **[kaggle.com/code](https://kaggle.com/code)** and click **"New Notebook"**.
-2. Click **File $\rightarrow$ Import Notebook** $\rightarrow$ select `FilmAura_ML_Backend.ipynb`.
-3. In the right panel under **Settings**, ensure Internet is **ON**.
-4. Click **Run All** (`Shift + Enter`).
-5. Artifacts are automatically exported to `/kaggle/working/artifacts/`.
+2. Click **File $\rightarrow$ Import Notebook** and upload:
+   `notebooks/FilmAura_ML_Backend_Full_32M.ipynb`
+3. In the right sidebar under **Settings**:
+   - Ensure **Internet** is toggled **ON** (required to download GroupLens dataset).
+   - Set **Environment** to Standard CPU or GPU (Standard CPU with 30 GB RAM is more than enough).
+4. Click **Run All** (`Shift + Enter` or the double play icon).
+5. **What happens during execution (~8-12 minutes total):**
+   - Stage 2 downloads the official MovieLens 32M archive (`ml-32m.zip`) in under 60 seconds.
+   - Stage 3 loads all ~32,000,000 ratings and all 2,050,000+ community tags.
+   - Stage 12 builds a sparse CSR matrix across all ~200,900 users and fits TruncatedSVD in ~90 seconds.
+   - Stage 19 exports all artifacts to `/kaggle/working/artifacts/` and automatically creates `filmaura_32m_artifacts.zip`.
+6. **Download Artifacts**:
+   - In the right-hand panel under **Output** (`/kaggle/working`), click the three dots next to `filmaura_32m_artifacts.zip` and select **Download**.
+   - Unzip and copy the files into your local `artifacts/` folder to upgrade your local React application with the full 32M models!
 
 ---
 
@@ -153,27 +166,41 @@ After running in Colab or Kaggle:
 cd "C:\Users\Admin\OneDrive\Desktop\Nishant AU\Sem 5\MLE\Project\FilmAura"
 ```
 
-### Step 2: (Optional) Create & Activate a Virtual Environment
-```powershell
-& "C:\Users\Admin\AppData\Local\Programs\Python\Python311\python.exe" -m venv venv
-.\venv\Scripts\Activate.ps1
-```
-
-### Step 3: Install Dependencies
+### Step 2: Install Python Dependencies
 ```powershell
 pip install -r requirements.txt
 ```
 
-### Step 4: Run Automated Unit Tests
+### Step 3: Run Automated Unit Tests
 ```powershell
-pytest tests/test_recommender.py -v
+python -m pytest tests/test_recommender.py -v
 ```
 
-### Step 5: Launch the Streamlit Frontend
+### Step 4: Launch the FilmAura React Application
+
+#### Option A: One-Command Production Launch (Recommended)
+`server.py` hosts the backend API and serves the pre-built React frontend directly on a single port:
 ```powershell
-streamlit run app.py
+python server.py
 ```
-*FilmAura will open automatically in your browser at `http://localhost:8501`.*
+*Open your browser at **`http://localhost:8000`** to experience the full React interface.*
+
+#### Option B: React Live Development Mode (Vite Hot Reload)
+If you want to edit the React frontend with instant live reloading:
+
+**Terminal 1 (Python Backend API):**
+```powershell
+python server.py
+```
+
+**Terminal 2 (React Vite Dev Server):**
+```powershell
+cd frontend
+npm run dev
+```
+*Vite will open at `http://localhost:5173` with automatic API proxying to port 8000.*
+
+*(Note: The legacy Streamlit application also remains available via `python -m streamlit run app.py` at `http://localhost:8501` if needed).*
 
 ---
 

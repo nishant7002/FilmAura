@@ -16,3 +16,7 @@ data/*.zip
 # Cache files
 artifacts/fontlist*.json
 .matplotlib/
+
+# Node.js
+frontend/node_modules/
+.npm/

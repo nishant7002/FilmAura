@@ -20,3 +20,5 @@ artifacts/fontlist*.json
 # Node.js
 frontend/node_modules/
 .npm/
+
+scratch/

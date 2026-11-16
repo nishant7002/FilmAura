@@ -1,17 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import CursorFollower from './components/CursorFollower';
+import Lightfall from './components/Lightfall';
+
+// Semantic line icons (16x16, 1.5 stroke, matching text color)
+function FilmIcon({ size = 16, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
+      <line x1="7" y1="2" x2="7" y2="22" />
+      <line x1="17" y1="2" x2="17" y2="22" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <line x1="2" y1="7" x2="7" y2="7" />
+      <line x1="2" y1="17" x2="7" y2="17" />
+      <line x1="17" y1="17" x2="22" y2="17" />
+      <line x1="17" y1="7" x2="22" y2="7" />
+    </svg>
+  );
+}
+
+function SlidersIcon({ size = 16, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </svg>
+  );
+}
+
+function StarIcon({ size = 14, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none" className={className}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function AlertIcon({ size = 16, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+}
+
+function SearchIcon({ size = 28, className = '' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
 
 const MOOD_OPTIONS = [
-  { id: 'Dark', label: '⚡ Dark (Brooding, Psychological, Neo-Noir)' },
-  { id: 'Motivational', label: '🌟 Motivational (Triumph, Perseverance, Inspiring)' },
-  { id: 'Happy', label: '😄 Happy (Uplifting, Joyous, Lighthearted)' },
-  { id: 'Relaxed', label: '☕ Relaxed (Calm, Serene, Gentle Pace)' },
-  { id: 'Romantic', label: '❤️ Romantic (Passionate, Heartfelt, Intimate)' },
-  { id: 'Adventurous', label: '🧭 Adventurous (Daring, Quests, Exploration)' },
-  { id: 'Thoughtful', label: '💭 Thoughtful (Philosophical, Mind-Bending, Cerebral)' },
-  { id: 'Emotional', label: '🎭 Emotional (Moving, Tearjerking, Poignant)' },
-  { id: 'Suspenseful', label: '🔍 Suspenseful (Edge-of-Your-Seat, Tense, Mystery)' },
-  { id: 'Funny', label: '😂 Funny (Hilarious, Witty, Laugh-out-Loud)' }
+  { id: 'Dark', label: 'Dark — Brooding, Psychological, Neo-Noir' },
+  { id: 'Motivational', label: 'Motivational — Triumph, Perseverance, Inspiring' },
+  { id: 'Happy', label: 'Happy — Uplifting, Joyous, Lighthearted' },
+  { id: 'Relaxed', label: 'Relaxed — Calm, Contemplative, Gentle Pace' },
+  { id: 'Romantic', label: 'Romantic — Passionate, Heartfelt, Intimate' },
+  { id: 'Adventurous', label: 'Adventurous — Daring, Epic Journeys, Exploration' },
+  { id: 'Thoughtful', label: 'Thoughtful — Philosophical, Mind-Bending, Cerebral' },
+  { id: 'Emotional', label: 'Emotional — Poignant Catharsis, Human Drama' },
+  { id: 'Suspenseful', label: 'Suspenseful — High-Stakes Mystery, Tense' },
+  { id: 'Funny', label: 'Funny — Satirical, Witty, Humorous' }
 ];
 
 export default function App() {
@@ -28,11 +88,11 @@ export default function App() {
   const [error, setError] = useState(null);
   const [metadataLoading, setMetadataLoading] = useState(true);
 
-  // Fetch initial metadata on mount (genres and movie catalog)
+  // Fetch metadata on mount (genre vocabulary & movie candidate index)
   useEffect(() => {
     fetch('/api/metadata')
       .then((res) => {
-        if (!res.ok) throw new Error('Could not connect to FilmAura backend.');
+        if (!res.ok) throw new Error('Could not connect to FilmAura backend service.');
         return res.json();
       })
       .then((data) => {
@@ -46,12 +106,12 @@ export default function App() {
       })
       .catch((err) => {
         console.error('Metadata error:', err);
-        setError('Model artifacts not found or backend server is not running.');
+        setError('Model artifacts not found or backend service is offline.');
         setMetadataLoading(false);
       });
   }, []);
 
-  // ONLY execute recommendations when the user explicitly clicks the button
+  // Submit recommendation query
   const handleRecommend = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -73,7 +133,7 @@ export default function App() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || 'Recommendation engine returned an error.');
+        throw new Error(errData.detail || 'Recommendation engine returned an unexpected error.');
       }
 
       const data = await res.json();
@@ -89,48 +149,46 @@ export default function App() {
 
   return (
     <>
+      {/* Dynamic Ambient Background Canvas */}
+      <div className="lightfall-bg-wrapper" aria-hidden="true">
+        <Lightfall />
+      </div>
+
       <CursorFollower />
 
       <div className="app-container">
-        {/* Hero Header */}
+        {/* Header */}
         <header className="hero">
-          <h1 className="hero-title">🎬 FilmAura</h1>
+          <div className="hero-badge-strip">
+            <span className="live-dot" />
+            <span>Hybrid Engine • 32M Interactions</span>
+          </div>
+          <h1 className="hero-title">FilmAura</h1>
           <p className="hero-tagline">
-            Your mood. Your taste. <span>Your next movie.</span>
-          </p>
-          <p className="hero-desc">
-            Discover cinema tuned precisely to your emotional frequency. Select your mood, 
-            filter by genre, or anchor with a cherished film — then click 
-            <strong style={{ color: '#f472b6' }}> Recommend Movies</strong> to activate the hybrid recommendation pipeline.
+            Cinema discovery calibrated to your emotional state. Filter by affective mood archetype, genre constraint, or anchor with a reference film.
           </p>
         </header>
 
         {/* Global Error Banner */}
         {error && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            borderRadius: '14px',
-            padding: '16px 20px',
-            color: '#fca5a5',
-            marginBottom: '30px'
-          }}>
-            <strong>⚠️ System Notice:</strong> {error}
+          <div className="error-banner">
+            <AlertIcon />
+            <span>{error}</span>
           </div>
         )}
 
         {/* Control Panel Form */}
         <form className="control-panel" onSubmit={handleRecommend}>
           <div className="panel-header">
-            <span>🎛️</span>
-            <span>Customize Your Taste Profile</span>
+            <SlidersIcon />
+            <span>Discovery Parameters</span>
           </div>
 
           <div className="grid-2">
             {/* Mood Selector */}
             <div className="form-group">
               <label className="form-label" htmlFor="mood-select">
-                1. Select your current mood:
+                Target Mood
               </label>
               <select
                 id="mood-select"
@@ -145,14 +203,14 @@ export default function App() {
                 ))}
               </select>
               <span className="form-hint">
-                Affective mood archetypes mapped to latent features and tags.
+                Projects user emotional intent onto continuous tag &amp; genre distributions.
               </span>
             </div>
 
             {/* Genre Selector */}
             <div className="form-group">
               <label className="form-label" htmlFor="genre-select">
-                2. Select preferred genre:
+                Genre Filter
               </label>
               <select
                 id="genre-select"
@@ -163,20 +221,20 @@ export default function App() {
               >
                 {availableGenres.map((g) => (
                   <option key={g} value={g}>
-                    {g === 'All Genres' ? '🌌 All Genres' : `🎬 ${g}`}
+                    {g}
                   </option>
                 ))}
               </select>
               <span className="form-hint">
-                Filters candidate pool to include your selected genre.
+                Hard catalog constraint applied before hybrid ranking.
               </span>
             </div>
           </div>
 
-          {/* Anchor Film Autocomplete / Dropdown */}
-          <div className="form-group" style={{ marginBottom: '22px' }}>
+          {/* Anchor Film Dropdown */}
+          <div className="form-group" style={{ marginBottom: '20px' }}>
             <label className="form-label" htmlFor="movie-select">
-              3. (Optional) Anchor with a cherished film:
+              Anchor Film (Optional)
             </label>
             <select
               id="movie-select"
@@ -186,24 +244,25 @@ export default function App() {
               disabled={metadataLoading}
             >
               <option value="">
-                None (Recommend based purely on mood &amp; genre resonance)
+                None (Pure affective mood &amp; genre ranking)
               </option>
               {moviesList.map((m) => (
                 <option key={m.movieId} value={m.movieId}>
-                  🎞️ {m.title}
+                  {m.title}
                 </option>
               ))}
             </select>
             <span className="form-hint">
-              When selected, TF-IDF and SVD will align visual tone, style, and narrative resonance to this movie.
+              When selected, activates TF-IDF semantic narrative similarity and SVD collaborative latent alignment.
             </span>
           </div>
 
-          {/* Slider & Submit Button */}
-          <div className="grid-2" style={{ alignItems: 'center', marginBottom: 0 }}>
+          {/* Slider & Submit Action */}
+          <div className="grid-2" style={{ alignItems: 'flex-end', marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label" htmlFor="topk-slider">
-                Results to display:
+                <span>Recommendations</span>
+                <span className="slider-val">{topK} films</span>
               </label>
               <div className="slider-container">
                 <input
@@ -215,7 +274,6 @@ export default function App() {
                   onChange={(e) => setTopK(e.target.value)}
                   className="custom-range"
                 />
-                <span className="slider-val">{topK}</span>
               </div>
             </div>
 
@@ -228,12 +286,12 @@ export default function App() {
                 {loading ? (
                   <>
                     <div className="spinner" />
-                    <span>Analyzing Cinema Vectors...</span>
+                    <span>Scoring candidates...</span>
                   </>
                 ) : (
                   <>
-                    <span>✨</span>
-                    <span>Recommend Movies</span>
+                    <FilmIcon />
+                    <span>Recommend Films</span>
                   </>
                 )}
               </button>
@@ -245,42 +303,48 @@ export default function App() {
         {recommendations !== null ? (
           <div>
             <div className="results-header">
-              <h2 className="results-title">🎯 Top Recommendations for You</h2>
+              <h2 className="results-title">Ranked Candidates</h2>
               {lastQuery && (
                 <div className="results-badge-info">
-                  Mood: <strong style={{ color: '#c084fc' }}>{lastQuery.mood}</strong> |{' '}
-                  Genre: <strong style={{ color: '#38bdf8' }}>{lastQuery.genre}</strong>
+                  Mood: <strong>{lastQuery.mood}</strong> • Genre: <strong>{lastQuery.genre}</strong>
                 </div>
               )}
             </div>
 
             {recommendations.length === 0 ? (
               <div className="placeholder-box">
-                <div className="placeholder-icon">🔍</div>
-                <div className="placeholder-title">No direct matches found</div>
+                <div className="placeholder-icon">
+                  <SearchIcon />
+                </div>
+                <div className="placeholder-title">No matching films found</div>
                 <p className="placeholder-text">
-                  No movies matched all chosen criteria. Try selecting "All Genres" or picking a different mood archetype.
+                  The selected genre filter produced no films matching this mood threshold. Try selecting "All Genres" or choosing an adjacent mood archetype.
                 </p>
               </div>
             ) : (
               recommendations.map((film, index) => {
+                const isTop = index === 0;
                 const isHighMatch = film.match_pct >= 90;
                 return (
                   <div
                     key={film.movieId}
-                    className="film-card"
-                    style={{ animationDelay: `${index * 0.08}s` }}
+                    className={`film-card ${isTop ? 'top-rank' : ''}`}
                   >
                     <div className="card-top">
-                      <div>
-                        <span className="movie-title">
-                          {index + 1}. {film.title}
+                      <div className="movie-title-group">
+                        <span className="movie-rank">
+                          {String(index + 1).padStart(2, '0')}.
                         </span>
-                        <span className="movie-year">({film.year})</span>
+                        <span className="movie-title">
+                          {film.title}
+                        </span>
+                        <span className="movie-year">
+                          {film.year}
+                        </span>
                       </div>
                       <div>
-                        <span className={`match-badge ${isHighMatch ? 'match-high' : 'match-mid'}`}>
-                          ⚡ {film.match_pct}% Match
+                        <span className={`match-badge ${isHighMatch ? 'high-match' : ''}`}>
+                          {film.match_pct}% Match
                         </span>
                       </div>
                     </div>
@@ -292,15 +356,16 @@ export default function App() {
                         </span>
                       ))}
                       <span className="rating-info">
-                        ⭐ {film.rating} / 5.0
+                        <StarIcon />
+                        {film.rating}
                       </span>
                       <span className="votes-info">
-                        ({film.votes.toLocaleString()} votes)
+                        ({film.votes.toLocaleString()} ratings)
                       </span>
                     </div>
 
                     <div className="explanation-box">
-                      💡 <strong>Why this movie?</strong> {film.explanation}
+                      <strong>Rationale:</strong> {film.explanation}
                     </div>
                   </div>
                 );
@@ -308,20 +373,21 @@ export default function App() {
             )}
           </div>
         ) : (
-          /* Initial Hero Placeholder before user clicks Recommend */
+          /* Initial Empty State */
           <div className="placeholder-box">
-            <div className="placeholder-icon">🍿 🔮 🎬</div>
-            <div className="placeholder-title">Ready to find your next favorite film?</div>
+            <div className="placeholder-icon">
+              <FilmIcon size={32} />
+            </div>
+            <div className="placeholder-title">Awaiting Discovery Query</div>
             <p className="placeholder-text">
-              Customize your mood and taste preferences above, then click{' '}
-              <strong style={{ color: '#f472b6' }}>"✨ Recommend Movies"</strong> to generate your tailored recommendations.
+              Select your affective mood and optional anchor film above, then click Recommend Films to generate your personalized cinema candidates.
             </p>
           </div>
         )}
 
         {/* Footer */}
         <footer className="app-footer">
-          🎬 <strong>FilmAura</strong> • Machine Learning Essentials (MLE) Course Project • Built with Python, Scikit-learn &amp; React
+          FilmAura • Machine Learning Essentials (ECSCI24302) • Built with Scikit-Learn, LightGBM, SVD &amp; React
         </footer>
       </div>
     </>

@@ -22,3 +22,5 @@ frontend/node_modules/
 .npm/
 
 scratch/
+.agents/
+.agents

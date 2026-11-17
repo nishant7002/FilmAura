@@ -1,14 +1,11 @@
 {
-  "dataset": "MovieLens 32M (Full Scale)",
-  "num_catalogue_movies": 26428,
-  "num_training_ratings": 25422228,
-  "hybrid_weights": {
-    "content": 0.4,
-    "collab": 0.25,
-    "popularity": 0.1,
-    "mood": 0.25
-  },
-  "mood_mappings": [
+  "model_version": "FilmAura-32M-v2.0",
+  "trained_on": "MovieLens 32M Benchmark",
+  "total_ratings_trained": 32000204,
+  "total_active_movies": 26428,
+  "svd_components": 15,
+  "global_mean": 3.54,
+  "moods": [
     "Happy",
     "Relaxed",
     "Emotional",
